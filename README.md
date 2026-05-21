@@ -1,55 +1,94 @@
 # mf-vite-8-named-exports
 
-A minimal reproduction repository for a bug with named exports in Module Federation on Vite 8.
-
-## The Bug
-
-When a remote module exposes a file with named exports (e.g. `routes.jsx` exports `routes` and `getRoutes`), the host application cannot consume them correctly via namespace import:
-
-```js
-import * as routesRemote from "@namespace/viteViteRemote/routes";
-```
-
-The imported object does not contain the expected named exports. The console log labeled `"NAMED EXPORTS NOT WORKING"` in the host's `App.jsx` demonstrates this.
+Minimal reproduction for three bugs in `@module-federation/vite@1.15.5` with Vite 8.
 
 ## Setup
 
-This is a pnpm workspace with two applications:
+- `vite-host` — host app, port `5001`
+- `vite-remote` — remote app, port `5002`, exposes `./App`, `./App2`, `./utils`
+- Both use React 19, TypeScript, `@module-federation/vite@1.15.5`
 
-| Package | Port | Role |
-| --- | --- | --- |
-| `vite-host` | 5175 | Host — consumes remote modules |
-| `vite-remote` | 5176 | Remote — exposes components and `routes.jsx` |
-
-## Steps to Reproduce
-
-1. Install dependencies:
-
-   ```sh
-   pnpm run install:deps
-   ```
-
-2. Start both applications in parallel:
-
-   ```sh
-   pnpm run dev
-   ```
-
-3. Open the host app at `http://localhost:5175` and check the browser DevTools console.
-
-4. Find the log entry that starts with `"NAMED EXPORTS NOT WORKING"` — it will show the value of `import * as routesRemote from "@namespace/viteViteRemote/routes"`, which should contain `{ routes, getRoutes }` but does not.
-
-## Expected Behavior
-
-`routesRemote` should be an object containing all named exports from `routes.jsx`:
-
-```js
-{
-  routes: [...],
-  getRoutes: [Function]
-}
+```
+pnpm install
 ```
 
-## Actual Behavior
+## Bug 1: Broken build — remoteEntry references non-existent files
 
-`routesRemote` does not contain the named exports as expected.
+**Package:** `@module-federation/vite@1.15.5`  
+**Affects:** remote app build output
+
+After `vite build` in `vite-host`, the generated `remoteEntry.js` references chunk files that do not exist in the output directory. Loading the remote in a host results in a network 404 for every exposed module chunk.
+
+In dev mode the problem is different but related: instead of real module imports from the remote, the host receives empty proxy objects — exposed components and utilities are effectively `undefined` at runtime.
+
+**Steps to reproduce:**
+
+```bash
+cd vite-remote && pnpm build
+# inspect dist/remoteEntry.js — references missing chunk filenames
+```
+
+**Expected:** `remoteEntry.js` references actual emitted chunks.  
+**Actual:** references point to files absent from `dist/`.
+
+## Bug 2: Build crashes when `input` is an HTML file
+
+**Package:** `@module-federation/vite@1.15.5`  
+**Affects:** host app build
+
+The host uses a named HTML entry in `rolldownOptions.input`:
+
+```ts
+// vite-host/vite.config.ts
+build: {
+  rolldownOptions: {
+    input: {
+      main: "indexProd.html",
+    },
+  },
+},
+```
+
+Running `vite build` in `vite-host` throws an error caused by the MF plugin. Removing the `federation()` plugin from the config makes the build succeed — confirming the plugin is the root cause.
+
+**Steps to reproduce:**
+
+```bash
+cd vite-host && pnpm build
+```
+
+**Expected:** build completes successfully.  
+**Actual:** build crashes with an error from the MF plugin when processing the HTML input entry.
+
+## Bug 3: `filename` with hash pattern — remoteEntry file not emitted
+
+**Package:** `@module-federation/vite@1.15.5`  
+**Affects:** remote app build output
+
+When `filename` in the `federation()` config contains a hash pattern, the file is never written to `dist/`:
+
+```ts
+// vite-remote/vite.config.ts
+federation({
+  name: "@test/remote",
+  filename: "remoteEntry-[hash].js",
+  // ...
+})
+```
+
+Two failure modes depending on whether `varFileName` is set:
+
+- **`varFileName` specified** — build completes but `remoteEntry-[hash].js` is absent; the manifest and internal references point to the `varFileName` value instead.
+- **`varFileName` not specified** — build completes with no `remoteEntry` file emitted at all; the remote is completely unreachable.
+
+Removing the hash placeholder (`filename: "remoteEntry.js"`) restores normal behavior.
+
+**Steps to reproduce:**
+
+```bash
+cd vite-remote && pnpm build
+# no remoteEntry-*.js file in dist/
+```
+
+**Expected:** `dist/remoteEntry-[hash].js` emitted and referenced correctly.  
+**Actual:** file absent from `dist/`; references broken or missing entirely.

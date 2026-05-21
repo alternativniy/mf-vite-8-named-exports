@@ -1,3 +1,6 @@
 packages:
- - vite-host
- - vite-remote
+  - vite-host
+  - vite-remote
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true

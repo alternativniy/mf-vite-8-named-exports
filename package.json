@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel --include-workspace-root dev",
     "build": "pnpm -r --parallel --include-workspace-root build",
+    "preview": "pnpm -r --parallel --include-workspace-root preview",
     "install:deps": "pnpm install && pnpm -r install"
   },
   "keywords": [],

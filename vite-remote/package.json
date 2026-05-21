@@ -1,34 +1,35 @@
 {
-  "name": "examples-vite-vite-remote",
-  "version": "0.0.3",
+  "name": "vite-remote",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite build && vite preview",
-    "mixed:1": "vite build && vite preview",
-    "mixed:2": "MIXED_VV=2 NODE_ENV=production vite"
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/react": "11.14.0",
-    "@emotion/styled": "11.14.1",
-    "@module-federation/vite": "1.13.5",
-    "@mui/material": "7.3.9",
-    "ag-grid-community": "35.2.0",
-    "ag-grid-react": "35.2.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "sass-embedded": "^1.98.0",
-    "styled-components": "6.3.12",
-    "vue": "^3.5.31",
-    "vue-router": "^5.0.4"
+    "@module-federation/vite": "=1.15.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
-    "@swc/core": "~1.15.21",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "vite": "^8.0.3",
-    "vite-plugin-top-level-await": "^1.6.0"
+    "@babel/core": "^7.29.0",
+    "@eslint/js": "^10.0.1",
+    "@rolldown/plugin-babel": "^0.2.3",
+    "@types/babel__core": "^7.20.5",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "eslint": "^10.4.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.59.4",
+    "vite": "^8.0.14"
   }
 }
