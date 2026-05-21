@@ -9,7 +9,7 @@ Minimal reproduction for three bugs in `@module-federation/vite@1.15.5` with Vit
 - Both use React 19, TypeScript, `@module-federation/vite@1.15.5`
 
 ```
-pnpm install
+pnpm install:deps
 ```
 
 ## Bug 1: Broken build — remoteEntry references non-existent files
@@ -24,7 +24,8 @@ In dev mode the problem is different but related: instead of real module imports
 **Steps to reproduce:**
 
 ```bash
-cd vite-remote && pnpm build
+pnpm build
+pnpm preview
 # inspect dist/remoteEntry.js — references missing chunk filenames
 ```
 
@@ -54,7 +55,7 @@ Running `vite build` in `vite-host` throws an error caused by the MF plugin. Rem
 **Steps to reproduce:**
 
 ```bash
-cd vite-host && pnpm build
+pnpm build
 ```
 
 **Expected:** build completes successfully.  
@@ -86,7 +87,7 @@ Removing the hash placeholder (`filename: "remoteEntry.js"`) restores normal beh
 **Steps to reproduce:**
 
 ```bash
-cd vite-remote && pnpm build
+pnpm build
 # no remoteEntry-*.js file in dist/
 ```
 
